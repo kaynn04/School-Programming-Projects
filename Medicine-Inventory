@@ -1,0 +1,411 @@
+from kivy.uix.button import Button
+from kivy.uix.label import Label
+from kivy.uix.textinput import TextInput
+from datetime import datetime, timedelta
+from kivy.app import App
+from kivy.uix.boxlayout import BoxLayout
+from kivy.base import stopTouchApp
+from kivy.uix.gridlayout import GridLayout
+from kivy.uix.tabbedpanel import TabbedPanel, TabbedPanelHeader
+from kivy.uix.tabbedpanel import TabbedPanelItem
+from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.uix.popup import Popup
+from kivy.uix.floatlayout import FloatLayout
+from kivy.graphics import Color, Rectangle
+
+import json
+import os.path
+
+class LoginScreen(Screen):
+    def __init__(self, **kwargs):
+        super(LoginScreen, self).__init__(**kwargs)
+        self.username_input = TextInput(hint_text='Username', multiline=False, size_hint=(None, None), size=(200, 40))
+        self.password_input = TextInput(hint_text='Password', multiline=False, password=True, size_hint=(None, None), size=(200, 40))
+        self.login_button = Button(text='Login', background_color=(0, 0, 1, 1), size_hint=(None, None), size=(100, 40))
+        self.login_button.bind(on_press=self.validate_credentials)
+        self.error_label = Label(text='', color=(1, 0, 0, 1), size_hint=(None, None), size=(200, 40))
+        self.welcome_label = Label(text='Welcome to MedStock', color=(0, 0, 1, 1), font_size='40sp', size_hint=(None, None), size=(200, 40))
+
+        layout = FloatLayout()
+        layout.add_widget(self.username_input)
+        layout.add_widget(self.password_input)
+        layout.add_widget(self.login_button)
+        layout.add_widget(self.error_label)
+        layout.add_widget(self.welcome_label)
+
+        # Center the widgets within the layout
+        self.welcome_label.pos_hint = {'center_x': 0.5, 'center_y': 0.8}
+        self.username_input.pos_hint = {'center_x': 0.5, 'center_y': 0.6}
+        self.password_input.pos_hint = {'center_x': 0.5, 'center_y': 0.5}
+        self.login_button.pos_hint = {'center_x': 0.5, 'center_y': 0.4}
+        self.error_label.pos_hint = {'center_x': 0.5, 'center_y': 0.3}
+
+        self.add_widget(layout)
+
+        # Set the background color
+        with self.canvas.before:
+            Color(1, 1, 1, 1)  # Set the background color here (R, G, B, A)
+            self.rect = Rectangle(size=self.size, pos=self.pos)
+
+        self.bind(size=self._update_rect, pos=self._update_rect)
+
+    def _update_rect(self, instance, value):
+        self.rect.pos = instance.pos
+        self.rect.size = instance.size
+
+    def validate_credentials(self, instance):
+        username = self.username_input.text
+        password = self.password_input.text
+
+    def validate_credentials(self, instance):
+        username = self.username_input.text
+        password = self.password_input.text
+
+        # Add your own logic to validate the credentials
+        if username == 'admin' and password == 'password':
+            self.manager.current = 'main'
+        else:
+            self.error_label.text = 'Invalid credentials'
+class MedicineInventoryApp(App):
+    def __init__(self, **kwargs):
+        super(MedicineInventoryApp, self).__init__(**kwargs)
+        self.inventory_file = 'inventory.json'
+        self.medicines = self.load_inventory()
+
+    def save_inventory(self):
+        with open(self.inventory_file, 'w') as file:
+            json.dump(self.medicines, file)
+
+    def load_inventory(self):
+        expiration_dates = {
+            'SOLMUX': '2023-12-31',
+            'IBUPROFEN': '2023-11-30',
+            'BIOGESIC': '2024-01-31',
+            'AMOXICILLIN': '2023-1-31',
+            'PARACETAMOL': '2024-02-28',
+            'ASPIRIN': '2023-12-31',
+            'CETIRIZINE': '2024-01-31',
+            'LORATADINE': '2024-02-29',
+            'RANITIDINE': '2023-11-30',
+            'OMEPRAZOLE': '2023-10-31',
+            'LOPERAMIDE': '2024-02-29',
+            'METFORMIN': '2023-12-31',
+            'GLICLAZIDE': '2024-01-31',
+            'AMLODIPINE': '2024-02-28',
+            'LOSARTAN': '2023-11-30',
+            'SIMVASTATIN': '2023-10-31',
+            'ATORVASTATIN': '2024-01-31',
+            'METOPROLOL': '2024-02-29',
+            'SALBUTAMOL': '2023-12-31',
+            'DIPHENHYDRAMINE': '2024-02-28',
+        }
+
+        if os.path.exists(self.inventory_file):
+            with open(self.inventory_file, 'r') as file:
+                try:
+                    inventory_data = json.load(file)
+                    # Check if expiration dates are present in the inventory data
+                    for medicine_data in inventory_data.values():
+                        if 'expiration_date' not in medicine_data:
+                            # If expiration_date is missing, add a default expiration date
+                            medicine_data['expiration_date'] = expiration_dates.get(medicine_data['name'])
+                    return inventory_data
+                except json.JSONDecodeError:
+                    print("Invalid JSON data in the inventory file.")
+        else:
+            print("Inventory file not found. Creating a new one.")
+
+        return {
+            'SOLMUX': {'quantity': 20, 'location': 'A1', 'expiration_date': expiration_dates['SOLMUX']},
+            'IBUPROFEN': {'quantity': 20, 'location': 'A1', 'expiration_date': expiration_dates['IBUPROFEN']},
+            'BIOGESIC': {'quantity': 20, 'location': 'A1', 'expiration_date': expiration_dates['BIOGESIC']},
+            'AMOXICILLIN': {'quantity': 20, 'location': 'A1', 'expiration_date': expiration_dates['AMOXICILLIN']},
+            'PARACETAMOL': {'quantity': 20, 'location': 'A1', 'expiration_date': expiration_dates['PARACETAMOL']},
+            'ASPIRIN': {'quantity': 20, 'location': 'A2', 'expiration_date': expiration_dates['ASPIRIN']},
+            'CETIRIZINE': {'quantity': 20, 'location': 'A2', 'expiration_date': expiration_dates['CETIRIZINE']},
+            'LORATADINE': {'quantity': 20, 'location': 'A2', 'expiration_date': expiration_dates['LORATADINE']},
+            'RANITIDINE': {'quantity': 20, 'location': 'A2', 'expiration_date': expiration_dates['RANITIDINE']},
+            'OMEPRAZOLE': {'quantity': 20, 'location': 'A3', 'expiration_date': expiration_dates['OMEPRAZOLE']},
+            'LOPERAMIDE': {'quantity': 20, 'location': 'A3', 'expiration_date': expiration_dates['LOPERAMIDE']},
+            'METFORMIN': {'quantity': 20, 'location': 'A3', 'expiration_date': expiration_dates['METFORMIN']},
+            'GLICLAZIDE': {'quantity': 20, 'location': 'A3', 'expiration_date': expiration_dates['GLICLAZIDE']},
+            'AMLODIPINE': {'quantity': 20, 'location': 'A4', 'expiration_date': expiration_dates['AMLODIPINE']},
+            'LOSARTAN': {'quantity': 20, 'location': 'A4', 'expiration_date': expiration_dates['LOSARTAN']},
+            'SIMVASTATIN': {'quantity': 20, 'location': 'A4', 'expiration_date': expiration_dates['SIMVASTATIN']},
+            'ATORVASTATIN': {'quantity': 20, 'location': 'A4', 'expiration_date': expiration_dates['ATORVASTATIN']},
+            'METOPROLOL': {'quantity': 20, 'location': 'A5', 'expiration_date': expiration_dates['METOPROLOL']},
+            'SALBUTAMOL': {'quantity': 20, 'location': 'A5', 'expiration_date': expiration_dates['SALBUTAMOL']},
+            'DIPHENHYDRAMINE': {'quantity': 20, 'location': 'A5','expiration_date': expiration_dates['DIPHENHYDRAMINE']}
+        }
+
+    def build(self):
+
+        # Create the screen manager
+        screen_manager = ScreenManager()
+
+        # Create the login screen
+        login_screen = LoginScreen(name='login')
+        screen_manager.add_widget(login_screen)
+
+        # Create the main application screen
+        main_screen = Screen(name='main')
+        main_screen.add_widget(self.create_main_layout())
+        screen_manager.add_widget(main_screen)
+
+        return screen_manager
+
+    def create_main_layout(self):
+        # Create the main layout
+        layout = BoxLayout(orientation='vertical')
+
+        # Create the TabbedPanel
+        tabbed_panel = TabbedPanel(do_default_tab=False, tab_width=200)
+
+        # Create the Search tab
+        search_tab = TabbedPanelItem(text='Medicines', background_color=(0.27, 0.51, 0.71, 1))
+        search_tab_content = BoxLayout(orientation='vertical', spacing=10, padding=10)
+
+        # Create the input fields
+        name_input = TextInput(hint_text='Medicine Name', halign="center", multiline=False)
+
+        # Create the buttons
+        search_button = Button(text='Search Medicine', background_color=(0.27, 0.51, 0.71, 1))
+        search_button.bind(on_press=lambda x: self.search_medicine(name_input.text.lower()))
+
+
+        # Create the addition button
+        addition_button = Button(text='Add Quantity (+)', background_color=(0.27, 0.51, 0.71, 1))
+        addition_button.bind(on_press=lambda x: self.add_quantity(name_input.text.lower()))
+
+        # Create the remove button
+        remove_button = Button(text='Remove Quantity (-)', background_color=(0.27, 0.51, 0.71, 1))
+        remove_button.bind(on_press=lambda x: self.remove_quantity(name_input.text.lower()))
+
+        self.details_label = Label(text='', halign='left', valign='middle')
+
+        search_tab_content.add_widget(name_input)
+        search_tab_content.add_widget(search_button)
+        search_tab_content.add_widget(addition_button)
+        search_tab_content.add_widget(remove_button)
+        search_tab_content.add_widget(self.details_label)
+
+        search_tab.content = search_tab_content
+
+        # Create the Inventory tab
+        inventory_tab = TabbedPanelItem(text='Add Medicine', background_color=(0.27, 0.51, 0.71, 1))
+        inventory_tab_content = BoxLayout(orientation='vertical', spacing=10, padding=10)
+
+        # Create the content for the Inventory tab...
+        inventory_label = Label(text='New Medicine', font_size='40sp')
+
+        # Create input fields for adding a new medicine
+        new_name_input = TextInput(hint_text='Medicine Name', multiline=False)
+        new_quantity_input = TextInput(hint_text='Quantity', multiline=False)
+        new_location_input = TextInput(hint_text='Location', multiline=False)
+        new_expiration_input = TextInput(hint_text='Expiration Date (YYYY-MM-DD)', multiline=False)
+
+        # Create a button for adding a new medicine
+        add_medicine_button = Button(text='Add Medicine', background_color=(0.27, 0.51, 0.71, 1))
+        add_medicine_button.bind(
+            on_press=lambda x: self.add_medicine(
+                new_name_input.text,
+                int(new_quantity_input.text),
+                new_location_input.text,
+                new_expiration_input.text
+            )
+        )
+
+        # Add the inventory content and new medicine inputs to the inventory tab content
+        inventory_tab_content.add_widget(inventory_label)
+        inventory_tab_content.add_widget(new_name_input)
+        inventory_tab_content.add_widget(new_quantity_input)
+        inventory_tab_content.add_widget(new_location_input)
+        inventory_tab_content.add_widget(new_expiration_input)
+        inventory_tab_content.add_widget(add_medicine_button)
+
+        inventory_tab.content = inventory_tab_content
+
+        # Create the Remove Medicine tab
+        removing = TabbedPanelItem(text='Remove Medicine', background_color=(0.27, 0.51, 0.71, 1))
+        removeMedicines = BoxLayout(orientation='vertical', spacing=10, padding=10)
+
+        # Create the input field for removing medicine
+        remove_input = TextInput(hint_text='Medicine Name', halign="center", multiline=False)
+
+        # Create the remove button
+        remove_button = Button(text='Remove Medicine', background_color=(0.27, 0.51, 0.71, 1))
+        remove_button.bind(on_press=lambda x: self.remove_medicine(remove_input.text.lower()))
+
+        removeMedicines.add_widget(remove_input)
+        removeMedicines.add_widget(remove_button)
+        removing.content = removeMedicines
+
+        # Create the Exit tab
+        exit_tab = TabbedPanelItem(text='Exit', background_color=(0.27, 0.51, 0.71, 1))
+        exit_tab_content = BoxLayout(orientation='vertical', spacing=10, padding=10)
+
+
+        # Add the tabs to the TabbedPanel
+        tabbed_panel.add_widget(search_tab)
+        tabbed_panel.add_widget(inventory_tab)
+        tabbed_panel.add_widget(removing)
+
+
+        # Add the TabbedPanel to the main layout
+        layout.add_widget(tabbed_panel)
+
+        return layout
+
+    def search_medicine(self, name):
+        name = name.upper()  # Convert the input name to uppercase
+
+        # Perform a case-insensitive search
+        matching_medicines = {k: v for k, v in self.medicines.items() if k.upper() == name}
+
+        if matching_medicines:
+            details = self.medicines[name]
+            quantity = details['quantity']
+            location = details['location']
+            expiration = details.get('expiration_date')
+
+            if expiration:
+                current_date = datetime.now().date()
+                expiration_date = datetime.strptime(expiration, '%Y-%m-%d').date()
+                if expiration_date < current_date:
+                    self.details_label.text = f"Name: {name}\nQuantity: {quantity}\nLocation: {location}\nExpiration: Expired"
+                    return
+
+            self.details_label.text = f"Name: {name}\nQuantity: {quantity}\nLocation: {location}\nExpiration: {expiration}"
+        else:
+            self.details_label.text = "Medicine not found."
+
+    def add_medicine(self, name, quantity, location, expiration):
+        name = name.upper()  # Convert the name to uppercase
+
+        # Check if the medicine already exists in the inventory
+        if name in self.medicines:
+            print(f"Medicine '{name}' already exists in the inventory.")
+            return
+
+        # Create a new medicine entry
+        new_medicine = {
+            'quantity': quantity,
+            'location': location,
+            'expiration_date': expiration
+        }
+
+        # Add the new medicine to the inventory
+        self.medicines[name] = new_medicine
+
+        # Save the updated inventory
+        self.save_inventory()
+
+        print(f"Medicine '{name}' added successfully.")
+
+    def remove_medicine(self, name):
+        name = name.upper()  # Convert the input name to uppercase
+        if name in self.medicines:
+            del self.medicines[name]
+            self.save_inventory()
+            print(f"Medicine {name} removed successfully.")
+        else:
+            print("Medicine not found.")
+
+    def add_quantity(self, name):
+        name = name.upper()
+        if name:
+            if name in self.medicines:
+                # Prompt the user for the quantity to add
+                quantity_input = TextInput(hint_text='Quantity', multiline=False)
+                quantity_button = Button(text='Add', size_hint=(None, None), size=(100, 50))
+                popup_layout = BoxLayout(orientation='horizontal', spacing=10)
+                popup_layout.add_widget(quantity_input)
+                popup_layout.add_widget(quantity_button)
+
+                # Create a popup and bind the button to add the quantity
+                popup = Popup(title='Add Quantity', content=popup_layout, size_hint=(None, None), size=(300, 150))
+                quantity_button.bind(
+                    on_press=lambda x: self.add_multiple_quantities(name, int(quantity_input.text), popup))
+                popup.open()
+            else:
+                self.details_label.text = "Medicine not found."
+                return
+
+            # Check if the medicine has an expiration date
+            expiration = self.medicines[name].get('expiration_date')
+            if expiration:
+                current_date = datetime.now().date()
+                expiration_date = datetime.strptime(expiration, '%Y-%m-%d').date()
+                if expiration_date < current_date:
+                    print(f"The medicine {name} has expired.")
+                    self.details_label.text += "\nIt's expired already."
+
+            self.save_inventory()
+
+    def add_multiple_quantities(self, name, quantity, popup):
+        self.medicines[name]['quantity'] += quantity
+        self.update_details_label(name)
+        print(f"Quantity added successfully. Current quantity: {self.medicines[name]['quantity']}")
+        self.save_inventory()
+        popup.dismiss()
+
+    def remove_quantity(self, name):
+        name = name.upper()
+        if name:
+            if name in self.medicines:
+                # Prompt the user for the quantity to remove
+                quantity_input = TextInput(hint_text='Quantity', multiline=False)
+                quantity_button = Button(text='Remove', size_hint=(None, None), size=(100, 50))
+                popup_layout = BoxLayout(orientation='horizontal', spacing=10)
+                popup_layout.add_widget(quantity_input)
+                popup_layout.add_widget(quantity_button)
+
+                # Create a popup and bind the button to remove the quantity
+                popup = Popup(title='Remove Quantity', content=popup_layout, size_hint=(None, None), size=(300, 150))
+                quantity_button.bind(
+                    on_press=lambda x: self.remove_multiple_quantities(name, int(quantity_input.text), popup))
+                popup.open()
+            else:
+                self.details_label.text = "Medicine not found."
+                return
+
+            # Check if the medicine has an expiration date
+            expiration = self.medicines[name].get('expiration_date')
+            if expiration:
+                current_date = datetime.now().date()
+                expiration_date = datetime.strptime(expiration, '%Y-%m-%d').date()
+                if expiration_date < current_date:
+                    print(f"The medicine {name} has expired.")
+                    self.details_label.text = f"The medicine {name} has expired."
+
+            self.save_inventory()
+
+    def remove_multiple_quantities(self, name, quantity, popup):
+        if quantity > 0:
+            if name in self.medicines:
+                current_quantity = self.medicines[name].get('quantity', 0)
+                if current_quantity >= quantity:
+                    self.medicines[name]['quantity'] -= quantity
+                    self.update_details_label(name)
+                    print(f"Quantity removed successfully. Current quantity: {self.medicines[name]['quantity']}")
+                    self.save_inventory()
+                    popup.dismiss()
+                else:
+                    self.details_label.text = "Insufficient quantity to remove."
+            else:
+                self.details_label.text = "Medicine not found."
+        else:
+            self.details_label.text = "Invalid quantity."
+
+    def update_details_label(self, name):
+        details = self.medicines[name]
+        quantity = details['quantity']
+        location = details['location']
+        expiration = details['expiration_date']
+        self.details_label.text = f"Name: {name}\nQuantity: {quantity}\nLocation: {location}\nExpiration: {expiration}"
+
+
+if __name__ == '__main__':
+    current_date = datetime.now()
+    expiration_date = (current_date + timedelta(days=365)).strftime('%Y-%m-%d')
+    MedicineInventoryApp().run()
