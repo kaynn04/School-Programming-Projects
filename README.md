@@ -1,2 +1,2 @@
-# Medicine-Inventory
-My application in our final project in Data Structure
+# School Projects
+My every coding projects in school
